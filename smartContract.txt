@@ -1,0 +1,47 @@
+contract Aluguel {
+    uint public valor;
+    address public vendedor;
+    address public comprador;
+    enum State { Created, Locked, Inactive }
+    State public state;
+
+    // Garantir que 'msg.value' é um número par.
+    // Divisão será truncada se for um número impar.
+    // Verificar via multiplicação que não é um número impar.
+    
+    function Alugar() payable {
+        vendedor = msg.sender;
+        valor = msg.value / 2;
+        require((2 * valor) == msg.value);
+    }
+    modifier condition(bool _condition) {
+        require(_condition);
+        _;
+    }
+    
+    modifier inState(State _state) {
+        require(state == _state);
+        _;
+    }
+    
+    event Aborted();
+    event PurchaseConfirmed();
+    event ItemReceived();
+    
+    function confirmarCompra()
+        inState(State.Created)
+        condition(msg.value == (2 * valor))
+        payable
+    {
+        PurchaseConfirmed();
+        comprador = msg.sender;
+        state = State.Locked;
+    }
+    
+    function Cancelar()
+    {
+        Aborted();
+        state = State.Inactive;
+        vendedor.transfer(this.balance);
+    }
+}
